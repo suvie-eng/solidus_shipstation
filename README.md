@@ -142,6 +142,86 @@ This is a problem that is faced by all recurring jobs. The solution is two-fold:
 
 ## Development
 
+Because of the object abstractions in this gem, some find it difficult to test API responses vis the console.  To ease such console work, a 'console harness' was developed that provides several affordances to exploratory development.
+
+Create a new harness in the console via 
+
+```ruby
+h = SolidusBactracs::ConsoleHarness.new
+```
+
+#### `.try_one`
+
+The easiest way to test the API, seeing both the output of the shipment when serialized as a XML SOAP request, and the result from the Bactracs API.
+
+```ruby
+h.try_one
+```
+
+or try a few
+
+```ruby
+h.try_batch(4)
+```
+
+maybe you have a shipment with particular issues, e.g. shipment number `H123456789`
+
+```ruby
+h.shipment_number('H123456789')
+
+h.try_one(h.shipment_number('H123456789'))
+```
+
+`.shipment_number` retries that shipment from the scope of available `h.shipments`.
+
+#### `.refresh`
+
+If that was successful, you may find your list of shipments has one or more shipments that are already synced
+
+```ruby
+h.shipments.size # => 7
+h.refresh
+h.shipments.size # => 6
+```
+
+#### `.cursor`
+
+You can set where in the recordset you want to continue trying from
+
+```
+h.cursor = 5
+h.try_one
+```
+
+#### `.batch`
+
+You can also change the default batch size
+
+```
+h.batch = 10
+h.try_batch
+# output from 10 runs, if not errors occur
+```
+
+#### deep objects
+
+Several deeply-nested objects are exposed for convenience
+
+* runner
+* syncer
+* sync (job)
+
+```
+h.serialize(shipment)
+# see the output of serialization
+
+h.runner.authenticated_call(shipment: h.shipments[0], serializer: h.syncer.client.shipment_serializer)
+```
+
+Remember that you can monkey patch code in the console, to test the improvement the harness or the gem itself.
+
+
+
 ### Testing the extension
 
 First bundle your dependencies, then run `bin/rake`. `bin/rake` will default to building the dummy
