@@ -5,7 +5,7 @@ module SolidusShipstation
     class RequestRunner
       API_BASE = 'https://ssapi.shipstation.com'
 
-      attr_reader :username, :password
+      attr_reader :username, :password, :last_response
 
       class << self
         def from_config
@@ -22,7 +22,7 @@ module SolidusShipstation
       end
 
       def call(method, path, params = {})
-        response = HTTParty.send(
+        @last_response = HTTParty.send(
           method,
           URI.join(API_BASE, path),
           body: params.to_json,
@@ -36,13 +36,13 @@ module SolidusShipstation
           },
         )
 
-        case response.code.to_s
+        case @last_response.code.to_s
         when /2\d{2}/
-          response.parsed_response
+          @last_response.parsed_response
         when '429'
-          raise RateLimitedError.from_response(response)
+          raise RateLimitedError.from_response(@last_response)
         else
-          raise RequestError.from_response(response)
+          raise RequestError.from_response(@last_response)
         end
       end
     end
