@@ -43,7 +43,12 @@ module SolidusShipstation
         return unless response
 
         response['results'].each do |shipstation_order|
-          shipment = shipment_matcher.call(shipstation_order, shipments)
+          post_sync(shipstation_order, shipments)
+        end
+      end
+
+      def post_sync(shipstation_order, shipments)
+        shipment = shipment_matcher.call(shipstation_order, shipments)
 
           unless shipstation_order['success']
             ::Spree::Event.fire(
