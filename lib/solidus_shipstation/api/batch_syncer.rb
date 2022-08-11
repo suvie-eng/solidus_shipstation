@@ -43,29 +43,33 @@ module SolidusShipstation
         return unless response
 
         response['results'].each do |shipstation_order|
-          shipment = shipment_matcher.call(shipstation_order, shipments)
+          post_sync(shipstation_order, shipments)
+        end
+      end
 
-          unless shipstation_order['success']
-            ::Spree::Event.fire(
-              'solidus_shipstation.api.sync_failed',
-              shipment: shipment,
-              payload: shipstation_order,
-            )
+      def post_sync(shipstation_order, shipments)
+        shipment = shipment_matcher.call(shipstation_order, shipments)
 
-            next
-          end
-
-          shipment.update_columns(
-            shipstation_synced_at: Time.zone.now,
-            shipstation_order_id: shipstation_order['orderId'],
-          )
-
+        unless shipstation_order['success']
           ::Spree::Event.fire(
-            'solidus_shipstation.api.sync_completed',
+            'solidus_shipstation.api.sync_failed',
             shipment: shipment,
             payload: shipstation_order,
           )
+
+          next
         end
+
+        shipment.update_columns(
+          shipstation_synced_at: Time.zone.now,
+          shipstation_order_id: shipstation_order['orderId'],
+        )
+
+        ::Spree::Event.fire(
+          'solidus_shipstation.api.sync_completed',
+          shipment: shipment,
+          payload: shipstation_order,
+        )
       end
     end
   end

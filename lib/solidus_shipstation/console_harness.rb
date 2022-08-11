@@ -1,6 +1,6 @@
 module SolidusShipstation
   class ConsoleHarness
-    attr_reader :runner, :syncer, :shipments
+    attr_reader :runner, :syncer, :sync, :shipments
 
     attr_accessor :cursor, :batch
 
@@ -37,6 +37,12 @@ module SolidusShipstation
         @cursor += 1 unless a_shipment
         return true
       end
+    rescue RateLimitedError => e
+      puts "rate limit hit - sleeping for #{e.retry_in} seconds"
+      sleep e.retry_in
+      try_one(shipment)
+    rescue
+      binding.pry
     ensure
       puts resp
     end
@@ -47,5 +53,6 @@ module SolidusShipstation
         break unless try_one
       end
     end
+
   end
 end
