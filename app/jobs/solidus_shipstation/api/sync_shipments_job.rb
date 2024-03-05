@@ -49,9 +49,8 @@ module SolidusShipstation
           if ThresholdVerifier.call(shipment)
             true
           else
-            ::Spree::Event.fire(
-              'solidus_shipstation.api.sync_skipped',
-              shipment: shipment,
+            ::Spree::Bus.publish(:'solidus_shipstation.api.sync_skipped',
+              shipment: shipment
             )
 
             false

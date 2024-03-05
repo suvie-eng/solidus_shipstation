@@ -23,18 +23,16 @@ module SolidusShipstation
         begin
           response = client.bulk_create_orders(shipments)
         rescue RateLimitedError => e
-          ::Spree::Event.fire(
-            'solidus_shipstation.api.rate_limited',
+          ::Spree::Bus.publish(:'solidus_shipstation.api.rate_limited',
             shipments: shipments,
-            error: e,
+            error: e
           )
 
           raise e
         rescue RequestError => e
-          ::Spree::Event.fire(
-            'solidus_shipstation.api.sync_errored',
+          ::Spree::Bus.publish(:'solidus_shipstation.api.sync_errored',
             shipments: shipments,
-            error: e,
+            error: e
           )
 
           raise e
@@ -55,10 +53,9 @@ module SolidusShipstation
 
         # an unmodifiable order will never sync, so don't fail it
         if (!shipstation_order['success'] && !unmodifiable)
-          ::Spree::Event.fire(
-            'solidus_shipstation.api.sync_failed',
+          ::Spree::Bus.publish(:'solidus_shipstation.api.sync_failed',
             shipment: shipment,
-            payload: shipstation_order,
+            payload: shipstation_order
           )
 
           return false
@@ -69,10 +66,9 @@ module SolidusShipstation
           shipstation_order_id: shipstation_order['orderId'],
         )
 
-        ::Spree::Event.fire(
-          'solidus_shipstation.api.sync_completed',
+        ::Spree::Bus.publish(:'solidus_shipstation.api.sync_completed',
           shipment: shipment,
-          payload: shipstation_order,
+          payload: shipstation_order
         )
 
         true
