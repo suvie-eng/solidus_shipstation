@@ -47,17 +47,9 @@ module SolidusShipstation
       UNMODIFIABLE_RX = /The order with orderKey "\w+" is inactive and cannot be modified/.freeze
 
       def post_sync(shipstation_order, shipments)
+        return false if failed?(shipstation_order)
+
         shipment = shipment_matcher.call(shipstation_order, shipments)
-        unmodifiable = (shipstation_order.fetch('errorMessage') || '').match?(UNMODIFIABLE_RX)
-
-        # an unmodifiable order will never sync, so don't fail it
-        if !shipstation_order['success'] && !unmodifiable
-          ::Spree::Bus.publish(:'solidus_shipstation.api.sync_failed',
-            shipment: shipment,
-            payload: shipstation_order)
-
-          return false
-        end
 
         shipment.update_columns(
           shipstation_synced_at: Time.zone.now,
@@ -69,6 +61,16 @@ module SolidusShipstation
           payload: shipstation_order)
 
         true
+      end
+
+      def failed?(shipstation_order)
+        unmodifiable = (shipstation_order.fetch('errorMessage') || '').match?(UNMODIFIABLE_RX)
+
+        return false unless !shipstation_order['success'] && !unmodifiable
+
+        ::Spree::Bus.publish(:'solidus_shipstation.api.sync_failed',
+          shipment: shipment,
+          payload: shipstation_order)
       end
     end
   end
