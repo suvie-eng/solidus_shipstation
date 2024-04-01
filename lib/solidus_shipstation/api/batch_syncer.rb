@@ -54,6 +54,7 @@ module SolidusShipstation
         shipment.update_columns(
           shipstation_synced_at: Time.zone.now,
           shipstation_order_id: shipstation_order['orderId'],
+          store_id: shipstation_order['advancedOptions']['storeId']
         )
 
         ::Spree::Bus.publish(:'solidus_shipstation.api.sync_completed',
