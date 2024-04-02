@@ -51,11 +51,15 @@ module SolidusShipstation
 
         return false if failed?(shipstation_order, shipment)
 
-        shipment.update_columns(
+        sync_opts = {
           shipstation_synced_at: Time.zone.now,
-          shipstation_order_id: shipstation_order['orderId'],
-          store_id: shipstation_order['advancedOptions']['storeId']
-        )
+          shipstation_order_id: shipstation_order['orderId']
+        }
+
+        store_id = shipstation_order.dig('advancedOptions', 'storeId')
+        sync_opt[:store_id] = store_id if store_id
+
+        shipment.update_columns(sync_opt)
 
         ::Spree::Bus.publish(:'solidus_shipstation.api.sync_completed',
           shipment: shipment,
