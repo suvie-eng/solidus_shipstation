@@ -56,8 +56,8 @@ module SolidusShipstation
           shipstation_order_id: shipstation_order['orderId']
         }
 
-        store_id = shipstation_order.dig('advancedOptions', 'storeId')
-        sync_opts[:store_id] = store_id if store_id
+        shipstation_store_id = shipstation_order.dig('advancedOptions', 'storeId')
+        sync_opt[:shipstation_store_id] = store_id if shipstation_store_id
 
         shipment.update_columns(sync_opts)
 
