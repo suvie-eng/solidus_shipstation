@@ -34,10 +34,16 @@ module SolidusShipstation
       def message_from_body
         return unless @response_body
 
-        parsed_body = JSON.parse(@response_body)
+        parsed_body = parse_response_body
         exception_type = parsed_body.fetch('ExceptionType', 'Unknown Exception Type')
         exception_message = parsed_body.fetch('ExceptionMessage', '')
         "#{exception_type}: #{exception_message}"
+      end
+
+      def parse_response_body
+        JSON.parse(@response_body)
+      rescue JSON::ParserError
+        { 'ExceptionMessage' => @response_body.to_s.strip }
       end
     end
   end

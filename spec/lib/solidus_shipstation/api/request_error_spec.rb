@@ -57,5 +57,30 @@ RSpec.describe SolidusShipstation::Api::RequestError do
 
       expect(error.message).to eq("Unknown Exception Type: ")
     end
+
+    it 'returns the raw body prefixed with Error when the response is not a valid JSON' do
+      response = instance_double(
+        'HTTParty::Response',
+        code: 429,
+        headers: {'Key' => 'Value'},
+        body: 'Too Many Requests'
+      )
+
+      error = described_class.from_response(response)
+
+      expect(error.message).to eq('Unknown Exception Type: Too Many Requests')
+    end
+
+
+    it 'it should NOT raise any error when the response is not a valid JSON' do
+      response = instance_double(
+        'HTTParty::Response',
+        code: 429,
+        headers: {'Key' => 'Value'},
+        body: 'Too Many Requests'
+      )
+
+      expect { described_class.from_response(response) }.not_to raise_error
+    end
   end
 end
